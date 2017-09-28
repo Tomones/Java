@@ -2,7 +2,7 @@ package com.lyss.java.queue;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 /**
- * 使用wait和notify设计一个阻塞有界队列
+ * 使用wait和notify设计一个简单的阻塞有界队列
  * @author Administrator
  * 主要实现两个方法
  * 		take() 和 put()
