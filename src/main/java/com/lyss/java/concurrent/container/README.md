@@ -1,0 +1,22 @@
+同步类容器都是线程安全的，但在某些场景下可能需要加锁来保护复合操作，复合类操作如：迭代（反复访问元素，遍历完容器中所有的元素）、跳转（根据指定的顺序找到当前表现出意外的行为，最经典的就是ConcurrentModificationException,原因是当容器迭代的过程中，被并发的修改了内容，这是由于早期迭代器设计的时候并没有考虑并发修改的问题）。
+
+同步类容器：如古老的vector、HashTable。这些容器的同步功能其实都是有JDK的Collections.synchronized等工厂方法去创建实现的。其底层的机制无非就是用传统的synchroized关键字对每个公用的方法都进行同步，使得每次只能有一个线程访问容器的状态。这就很明显不能满足我们现在的并发要求。在保证线程安全的同时，也必须要有足够好的性能
+
+
+并发类容器：
+	JDK5.0之后提供了并发类容器来代替同步类容器从而改善性能，同步类容器的状态都是串行化的。他们虽然实现了线程安全，但使严重的降低了并发性，在多线程的环境中，严重降低了应用程序的吞吐量。
+	并发类容器是专门针对并发设计的，使用ConcurrentHashMap来代替基于散列的传统的HashTable，而且在ConcurrentHashMap容器中，添加了一些常见的复合操作的支持。以及使用了CopyOnWriteArrayList代替Voctor，并发的CopyOnWriteArraySet，以及并发的Queue，ConcurrentLinkedQueue和LinkedBlockingQueue，前者是高性能的队列，后者是以阻塞形式的队列，具体实现Queue还有很多，利如ArrayBlockingQueue、PriorityBlockingQueue（支持优先级的队列）、SynchronousQueue等
+	(队列Demo参看queue包)
+	
+	
+支持高并发的容器：
+ConcurrentMap：
+	ConcurrentHashMap
+	ConcurrentSkipListMap（支持并发排序功能，弥补ConcurrentHashMap）
+	ConcurrentHashMap内部使用段（Segment）来表示不同的部分，每个段其实就是小的HashTable，他们有自己的锁。只要多个修改操作发生在不同的段上，他们就可以并发进行。把一个整体分成16个段，也就是最高支持16个线程的并发修改操作，这也是在多线程场景时减少锁的粒度从而降低锁竞争的一种方案，并且代码中大多数共享变量使用volitle关键字申明，目的是在第一时间获取修改内容，性能非常好
+	
+Copy-On-Write:
+	Copy-On-Write简称COW,是用于程序设计中的一种优化策略
+	JDK里面的COW容器有两种：CopyOnWriteArrayList和CopyOnWriteArraySet，COW容器非常有用，可以再非常多的并发场景中使用到。
+	什么是CoypOnWrite容器：
+		CopyOnWrite容器即写时复制的容器，通俗的理解就是当我们往一个容器里添加元素的时候（写操作），不直接往当前容器添加，而是先将当前容器进行Copy，复制出一个新的容器，然后新的容器里添加元素，添加完元素之后，再将原容器的引用指向新容器。这样做的好处是我们可以对CopyOnWrite容器进行并发的读，而不需要加锁，因为当前容器不会添加任何元素，所以CopyOnWrite是一个读写分离的思想，读和写不同的容器（适用于读多写少的场景）
